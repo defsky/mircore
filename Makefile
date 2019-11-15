@@ -7,7 +7,7 @@ GOGET=$(GOCMD) get
 BINARY_NAME=mirserver
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-all: run
+all: build
 build:
 	$(GOBUILD) -o $(BINARY_NAME) -v main.go
 test:

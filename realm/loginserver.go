@@ -7,10 +7,8 @@ import (
 
 	"github.com/Allenxuxu/gev"
 	"github.com/Allenxuxu/gev/connection"
-	_ "github.com/Allenxuxu/gev/log"
 
 	"mircore/protocol"
-	"mircore/utils"
 	corelog "mircore/utils/log"
 )
 
@@ -24,11 +22,11 @@ type LoginServer struct {
 }
 
 func log(v ...interface{}) {
-	corelog.RealmLog.Println(v...)
+	corelog.Realm.Println(v...)
 }
 
 func logf(fmt string, v ...interface{}) {
-	corelog.RealmLog.Printf(fmt, v...)
+	corelog.Realm.Printf(fmt, v...)
 }
 
 //NewLoginServer create login server
@@ -56,11 +54,16 @@ func (s *LoginServer) OnConnect(c *connection.Connection) {
 	e := s.conns.PushBack(c)
 	s.mtx.Unlock()
 	c.SetContext(e)
+
+	c.Send([]byte("fvpvTbKVC\\WnpqQvh_xdY\\\\"))
 }
 
 //OnMessage callback when new message come
 func (s *LoginServer) OnMessage(c *connection.Connection, ctx interface{}, data []byte) (out []byte) {
-	log("Received: ", utils.RawData(data))
+	header := ctx.(*protocol.PacketHeader)
+
+	logf("Seq(%d) Recog(%d) Opcode(%d) PacketSize(%d): %s", 
+		header.Seq, header.Recog, header.Opcode, header.PacketSize,string(data))
 
 	return
 }

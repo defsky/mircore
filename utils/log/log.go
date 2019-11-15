@@ -5,13 +5,19 @@ import (
 	"os"
 )
 
-//RealmLog logger for realmd
-var RealmLog *log.Logger
+var (
+	//Core logger for core log
+	Core *log.Logger
 
-//WorldLog logger for world
-var WorldLog *log.Logger
+	//Realm logger for realmd log
+	Realm *log.Logger
+
+	//World logger for world log
+	World *log.Logger
+)
 
 func init() {
-	RealmLog = log.New(os.Stdout, "[Realm]", log.LstdFlags)
-	WorldLog = log.New(os.Stdout, "[World]", log.LstdFlags)
+	Core = log.New(os.Stdout, "[Core ]", log.LstdFlags)
+	Realm = log.New(os.Stdout, "[Realm]", log.LstdFlags)
+	World = log.New(os.Stdout, "[World]", log.LstdFlags)
 }

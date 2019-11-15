@@ -7,7 +7,6 @@ import (
 
 	"github.com/Allenxuxu/gev"
 	"github.com/Allenxuxu/gev/connection"
-	_ "github.com/Allenxuxu/gev/log"
 
 	"mircore/protocol"
 	"mircore/utils"
@@ -15,11 +14,11 @@ import (
 )
 
 func log(v ...interface{}) {
-	corelog.WorldLog.Println(v...)
+	corelog.World.Println(v...)
 }
 
 func logf(fmt string, v ...interface{}) {
-	corelog.WorldLog.Printf(fmt, v...)
+	corelog.World.Printf(fmt, v...)
 }
 
 //WorldServer world server

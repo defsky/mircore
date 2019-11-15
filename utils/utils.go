@@ -13,12 +13,12 @@ func RawData(data []byte) string {
 			if i%16 == 0 {
 				ret += "]\n    ["
 			} else if i%8 == 0 {
-				ret += "| "
+				ret += " | "
 			} else {
 				ret += " "
 			}
 		}
-		ret += fmt.Sprintf("%-3d", int(v))
+		ret += fmt.Sprintf("%02X", int(v))
 	}
 	ret += "]"
 

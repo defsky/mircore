@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,26 @@ import (
 	"mircore/realm"
 	"mircore/world"
 )
+
+const banner = `
+                                  ###
+                                 ####                #####
+              ###        ####    ###               #######
+              ###       ####                      #### ###
+             ####      #####                    ####   ###
+             #####    #####         ###  ####  ####   ####   #####    ###  ####   #####
+            ######   ######   ###  ### ###### ####    ###   #######  ### ######  ######
+            ######  ######   ####  #######   ####         ####  ###  #######    ## ###
+           ####### ### ###   ###  ######    ####          ###   ### ######     ## ####
+          ########### ###   ###   #####     ###          ###    ### #####     ######
+          ### ######  ###   ###  #####     ###          ###    ### #####     #####
+         ###   ###    ###  ###   ####      ###          ###   #### ####     ####
+         ###         ###   ###   ####     ###          ###   ####  ####     ###    ###
+        ###          ###  ###   ####      ###     ###  ###  ####  ####      ###  ####
+        ###          ###  ###   ###       ####  ####   #######    ###       ########
+       ###                ###   ###       #########     #####     ###       ######
+                                           ######
+`
 
 func main() {
 	var loginPort int
@@ -22,6 +43,8 @@ func main() {
 	flag.IntVar(&loginPort, "loginPort", 7000, "login server port")
 	flag.IntVar(&worldPort, "worldPort", 7400, "world server port")
 	flag.Parse()
+
+	fmt.Println(banner)
 
 	if loginServer, err = realm.NewLoginServer(loginPort); err != nil {
 		panic(err)
@@ -46,6 +69,7 @@ func main() {
 		signal.Notify(c, os.Interrupt, os.Kill)
 		_ = <-c
 		log.Println("Received Interrupt signal, shutdown servers ...")
+
 		loginServer.Stop()
 		worldServer.Stop()
 
