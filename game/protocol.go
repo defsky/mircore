@@ -1,20 +1,19 @@
-package protocol
+package game
 
 import (
 	"encoding/binary"
 	"errors"
+	"mircore/utils"
+	"mircore/utils/log"
 	"strconv"
 
 	"github.com/Allenxuxu/gev/connection"
 	"github.com/Allenxuxu/ringbuffer"
 	"github.com/gobwas/pool/pbytes"
-
-	"mircore/utils"
-	"mircore/utils/log"
 )
 
-//GameProtocol game protocol struct
-type GameProtocol struct {
+//Protocol game protocol struct
+type Protocol struct {
 }
 
 //PacketHeader game packet header struct
@@ -29,7 +28,7 @@ type PacketHeader struct {
 }
 
 //UnPacket unpack data
-func (p *GameProtocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuffer) (interface{}, []byte) {
+func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuffer) (interface{}, []byte) {
 	buf := pbytes.GetLen(1)
 	defer pbytes.Put(buf)
 
@@ -68,7 +67,7 @@ func (p *GameProtocol) UnPacket(c *connection.Connection, buffer *ringbuffer.Rin
 }
 
 //Packet pack data
-func (p *GameProtocol) Packet(c *connection.Connection, data []byte) []byte {
+func (p *Protocol) Packet(c *connection.Connection, data []byte) []byte {
 	return data
 }
 

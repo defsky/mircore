@@ -1,4 +1,4 @@
-package world
+package core
 
 import (
 	"container/list"
@@ -8,18 +8,9 @@ import (
 	"github.com/Allenxuxu/gev"
 	"github.com/Allenxuxu/gev/connection"
 
-	"mircore/protocol"
 	"mircore/utils"
-	corelog "mircore/utils/log"
+	"mircore/utils/log"
 )
-
-func log(v ...interface{}) {
-	corelog.World.Println(v...)
-}
-
-func logf(fmt string, v ...interface{}) {
-	corelog.World.Printf(fmt, v...)
-}
 
 //WorldServer world server
 type WorldServer struct {
@@ -30,7 +21,7 @@ type WorldServer struct {
 }
 
 //NewWorldServer create new world server
-func NewWorldServer(port int) (*WorldServer, error) {
+func NewWorldServer(port int, proto connection.Protocol) (*WorldServer, error) {
 	var err error
 
 	s := new(WorldServer)
@@ -41,14 +32,14 @@ func NewWorldServer(port int) (*WorldServer, error) {
 		gev.Network("tcp"),
 		gev.Address(":"+strconv.Itoa(port)),
 		gev.NumLoops(-1),
-		gev.Protocol(&protocol.GameProtocol{}))
+		gev.Protocol(proto))
 
 	return s, err
 }
 
 //OnConnect new connection callback
 func (s *WorldServer) OnConnect(c *connection.Connection) {
-	logf("New Connection from: %s\n", c.PeerAddr())
+	log.World.Printf("New Connection from: %s\n", c.PeerAddr())
 
 	s.mtx.Lock()
 	e := s.conns.PushBack(c)
@@ -58,14 +49,14 @@ func (s *WorldServer) OnConnect(c *connection.Connection) {
 
 //OnMessage new message callback
 func (s *WorldServer) OnMessage(c *connection.Connection, ctx interface{}, data []byte) (out []byte) {
-	log("Received: ", utils.RawData(data))
+	log.World.Println("Received: ", utils.RawData(data))
 
 	return
 }
 
 //OnClose connection close callback
 func (s *WorldServer) OnClose(c *connection.Connection) {
-	logf("Connection closed from: %s", c.PeerAddr())
+	log.World.Printf("Connection closed from: %s", c.PeerAddr())
 
 	e := c.Context().(*list.Element)
 
@@ -76,13 +67,13 @@ func (s *WorldServer) OnClose(c *connection.Connection) {
 
 //Start start world server
 func (s *WorldServer) Start() {
-	logf("Listening at *:%d\n", s.port)
+	log.World.Printf("Listening at *:%d\n", s.port)
 
 	s.listener.Start()
 }
 
 //Stop stop world server
 func (s *WorldServer) Stop() {
-	log("Stopping server ...")
+	log.World.Printf("Stopping server ...")
 	s.listener.Stop()
 }
