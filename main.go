@@ -8,8 +8,9 @@ import (
 	"os/signal"
 	"sync"
 
-	"mircore/core"
-	"mircore/game"
+	"mircore/game/proto"
+	"mircore/mird"
+	"mircore/realmd"
 )
 
 const banner = `
@@ -36,8 +37,8 @@ func main() {
 	var loginPort int
 	var worldPort int
 	var wg sync.WaitGroup
-	var loginServer *core.Realm
-	var worldServer *core.WorldServer
+	var loginServer *realmd.Realm
+	var worldServer *mird.WorldServer
 	var err error
 
 	flag.IntVar(&loginPort, "loginPort", 7000, "login server port")
@@ -46,23 +47,25 @@ func main() {
 
 	fmt.Println(banner)
 
-	if loginServer, err = core.NewRealm(loginPort, &game.Protocol{}); err != nil {
+	loginServer, err = realmd.NewRealmServer(loginPort, &proto.Protocol{})
+	if err != nil {
 		panic(err)
-	} else {
-		go func() {
-			loginServer.Start()
-			wg.Done()
-		}()
 	}
 
-	if worldServer, err = core.NewWorldServer(worldPort, &game.Protocol{}); err != nil {
+	go func() {
+		loginServer.Start()
+		wg.Done()
+	}()
+
+	worldServer, err = mird.NewWorldServer(worldPort, &proto.Protocol{})
+	if err != nil {
 		panic(err)
-	} else {
-		go func() {
-			worldServer.Start()
-			wg.Done()
-		}()
 	}
+
+	go func() {
+		worldServer.Start()
+		wg.Done()
+	}()
 
 	c := make(chan os.Signal, 1)
 	go func() {

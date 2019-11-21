@@ -1,8 +1,9 @@
-package game
+package proto
 
 import (
 	"encoding/binary"
 	"errors"
+	"math"
 	"mircore/utils"
 	"mircore/utils/log"
 	"strconv"
@@ -14,17 +15,6 @@ import (
 
 //Protocol game protocol struct
 type Protocol struct {
-}
-
-//PacketHeader game packet header struct
-type PacketHeader struct {
-	Seq        int
-	Opcode     uint16
-	PacketSize int
-	Recog      uint32
-	P1         uint16
-	P2         uint16
-	P3         uint16
 }
 
 //UnPacket unpack data
@@ -52,10 +42,10 @@ func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuf
 			}
 			log.Core.Println("Received:", utils.RawData(dataPacket))
 
-			header, body := unPackHeader(dataPacket)
-			header.Seq = packetSeq
+			packet := NewPacket(dataPacket)
+			packet.Header.Seq = packetSeq
 
-			return header, body
+			return packet, nil
 		}
 		if isData {
 			data = append(data, buf...)
@@ -68,42 +58,28 @@ func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuf
 
 //Packet pack data
 func (p *Protocol) Packet(c *connection.Connection, data []byte) []byte {
-	return data
+	out := encodeData(data)
+	log.Core.Printf("Send: %s", string(out))
+	log.Core.Printf("%s\n", utils.RawData(out))
+
+	return out
 }
 
-func unPackHeader(packet []byte) (header *PacketHeader, data []byte) {
-	header = &PacketHeader{}
-
-	header.Recog = binary.LittleEndian.Uint32(packet[0:4])
-	header.Opcode = binary.LittleEndian.Uint16(packet[4:6])
-	header.P1 = binary.LittleEndian.Uint16(packet[6:8])
-	header.P2 = binary.LittleEndian.Uint16(packet[8:10])
-	header.P3 = binary.LittleEndian.Uint16(packet[10:12])
-	header.PacketSize = len(packet)
-
-	if header.PacketSize > 12 {
-		data = make([]byte, header.PacketSize-12)
-		copy(data, packet[12:])
-	}
-
-	return
-}
-
-func decodeData(s []byte) (d []byte, err error) {
-	srcLen := len(s)
-
+func decodeData(in []byte) (out []byte, err error) {
 	buf := pbytes.GetLen(4)
 	defer pbytes.Put(buf)
 
-	for i, v := range s {
+	srcLen := len(in)
+
+	for i, v := range in {
 		v = v - 0x3c
 		if v < 0 {
 			return nil, errors.New("Invalid Packet")
 		}
-		s[i] = v & 0x3f
+		in[i] = v & 0x3f
 	}
 
-	data := make([]byte, 0, 1)
+	out = make([]byte, 0, srcLen*3/4)
 	dataLen := 0
 	i, j := 0, 4
 	for {
@@ -114,7 +90,7 @@ func decodeData(s []byte) (d []byte, err error) {
 		if dataLen < 1 {
 			break
 		}
-		copy(buf, s[i:j])
+		copy(buf, in[i:j])
 
 		var tmpUint32 uint32 = 0
 
@@ -125,9 +101,7 @@ func decodeData(s []byte) (d []byte, err error) {
 
 		binary.BigEndian.PutUint32(buf, tmpUint32)
 
-		if dataLen > 0 {
-			data = append(data, buf[1:1+dataLen]...)
-		}
+		out = append(out, buf[1:1+dataLen]...)
 
 		i, j = i+4, j+4
 
@@ -136,8 +110,42 @@ func decodeData(s []byte) (d []byte, err error) {
 		}
 	}
 
-	return data, nil
+	return
 }
-func encodeData(s []byte) []byte {
-	return s
+func encodeData(in []byte) (out []byte) {
+	srcLen := len(in)
+	outLen := int(math.Ceil(float64(srcLen*4/3))) + 2
+	out = make([]byte, outLen)
+
+	out[0] = '#'
+
+	dataLen := 4
+	i, j := 0, 3
+	idx := 1
+	for {
+		if j > srcLen {
+			j = srcLen
+			dataLen = int(math.Ceil(float64((j - i) * 4 / 3)))
+		}
+
+		buf := make([]byte, 4)
+		copy(buf[1:], in[i:j])
+
+		tempUint32 := binary.BigEndian.Uint32(buf)
+		for a := 0; a < dataLen; a++ {
+			n := uint((3 - a) * 6)
+			out[idx] = byte((tempUint32>>n)&0x3f + 0x3c)
+			idx++
+		}
+
+		i, j = i+3, j+3
+
+		if i >= srcLen {
+			break
+		}
+	}
+
+	out[outLen-1] = '!'
+
+	return
 }

@@ -1,8 +1,9 @@
-package core
+package realmd
 
 import (
 	"container/list"
-	"mircore/game"
+	"mircore/game/proto"
+	"mircore/utils"
 	"mircore/utils/log"
 
 	"strconv"
@@ -21,8 +22,8 @@ type Realm struct {
 	listener *gev.Server
 }
 
-//NewRealm create login server
-func NewRealm(port int, proto connection.Protocol) (*Realm, error) {
+//NewRealmServer create login server
+func NewRealmServer(port int, proto connection.Protocol) (*Realm, error) {
 	var err error
 
 	s := new(Realm)
@@ -52,10 +53,19 @@ func (s *Realm) OnConnect(c *connection.Connection) {
 
 //OnMessage callback when new message come
 func (s *Realm) OnMessage(c *connection.Connection, ctx interface{}, data []byte) (out []byte) {
-	header := ctx.(*game.PacketHeader)
+	packet := ctx.(*proto.WorldPacket)
 
 	log.Realm.Printf("Seq(%d) Recog(%d) Opcode(%d) PacketSize(%d): %s",
-		header.Seq, header.Recog, header.Opcode, header.PacketSize, string(data))
+		packet.Header.Seq, packet.Header.Recog, packet.Header.Opcode,
+		packet.Size, string(packet.Data))
+
+	outdata, ret := handleIncoming(packet)
+
+	log.Realm.Printf("process ret:%d", ret)
+	if ret == 0 {
+		log.Realm.Printf("Send:%s", utils.RawData(outdata))
+		out = outdata
+	}
 
 	return
 }
