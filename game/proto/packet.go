@@ -1,58 +1,58 @@
 package proto
 
-import "encoding/binary"
-
-//WorldPacketHeader game packet header struct
-type WorldPacketHeader struct {
-	Seq    int
-	Opcode uint16
-	Recog  uint32
-	P1     uint16
-	P2     uint16
-	P3     uint16
-}
+import (
+	"bytes"
+	"encoding/binary"
+)
 
 //WorldPacket packet type for world socket
 type WorldPacket struct {
-	Header *WorldPacketHeader
-	Data   []byte
+	Recog  RecogType
+	Opcode OpcodeType
+	P1     ParamType
+	P2     TagType
+	P3     SeriesType
+	buf    *bytes.Buffer
+	Seq    int
 	Size   int
 }
 
-//NewPacket create a WorldPacket
-func NewPacket(data []byte) (p *WorldPacket) {
-	p = new(WorldPacket)
-	p.Header = new(WorldPacketHeader)
+func (p *WorldPacket) Marshal() (buf *ProtoBuf) {
+	var data []byte
+	var dataLen int
 
-	p.Size = len(data)
-
-	headerSize := 12
-
-	if data[0] == '*' && data[1] == '*' {
-		headerSize = 2
-	}
-
-	if headerSize == 2 {
-		p.Header.Opcode = 65001
+	buf = new(ProtoBuf)
+	if p.buf == nil {
+		p.buf = new(bytes.Buffer)
 	} else {
-		p.Header.Recog = binary.LittleEndian.Uint32(data[0:4])
-		p.Header.Opcode = binary.LittleEndian.Uint16(data[4:6])
-		p.Header.P1 = binary.LittleEndian.Uint16(data[6:8])
-		p.Header.P2 = binary.LittleEndian.Uint16(data[8:10])
-		p.Header.P3 = binary.LittleEndian.Uint16(data[10:12])
+		dataLen = p.buf.Len()
+		if dataLen > 0 {
+			data = p.buf.Bytes()
+			p.buf.Reset()
+		}
 	}
 
-	dataSize := p.Size - headerSize
+	binary.Write(buf, binary.LittleEndian, p.Recog)
+	binary.Write(buf, binary.LittleEndian, p.Opcode)
+	binary.Write(buf, binary.LittleEndian, p.P1)
+	binary.Write(buf, binary.LittleEndian, p.P2)
+	binary.Write(buf, binary.LittleEndian, p.P3)
 
-	if dataSize > 0 {
-		p.Data = make([]byte, dataSize)
-		copy(p.Data, data[headerSize:])
+	if data != nil {
+		buf.Write(data)
 	}
 
 	return
 }
 
-//GetOpcode get opcode of current packet
-func (p *WorldPacket) GetOpcode() uint16 {
-	return p.Header.Opcode
+func (p *WorldPacket) SetRecogOp(n RecogType, m OpcodeType) {
+
+}
+
+func (p *WorldPacket) SetParams(p1 ParamType, p2 TagType, p3 SeriesType) {
+
+}
+
+func (p *WorldPacket) Data() []byte {
+	return p.buf.Bytes()
 }

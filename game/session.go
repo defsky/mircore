@@ -1,13 +1,29 @@
 package game
 
-import "github.com/Allenxuxu/gev/connection"
+import (
+	"mircore/game/proto"
+	"mircore/utils/log"
+
+	"github.com/Allenxuxu/gev/connection"
+)
+
+type Session interface {
+	SendPacket(p *proto.WorldPacket)
+}
 
 //Session world session object
-type Session struct {
-	conn *connection.Connection
+type RealmSession struct {
+	Conn *connection.Connection
 }
 
 //SendPacket send packet to session
-func (s *Session) SendPacket(p []byte) {
-	s.conn.Send(p)
+func (s *RealmSession) SendPacket(p *proto.WorldPacket) {
+	pbuf := p.Marshal()
+	log.Realm.Printf("Send:%s\n", pbuf.HexString())
+
+	s.Conn.Send(pbuf.Encode().Bytes())
+}
+
+type WorldSession struct {
+	Conn *connection.Connection
 }

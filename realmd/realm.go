@@ -2,8 +2,8 @@ package realmd
 
 import (
 	"container/list"
+	"mircore/game"
 	"mircore/game/proto"
-	"mircore/utils"
 	"mircore/utils/log"
 
 	"strconv"
@@ -43,8 +43,11 @@ func NewRealmServer(port int, proto connection.Protocol) (*Realm, error) {
 func (s *Realm) OnConnect(c *connection.Connection) {
 	log.Realm.Printf("New Connection from: %s\n", c.PeerAddr())
 
+	sess := &game.RealmSession{
+		Conn: c,
+	}
 	s.mtx.Lock()
-	e := s.conns.PushBack(c)
+	e := s.conns.PushBack(sess)
 	s.mtx.Unlock()
 	c.SetContext(e)
 
@@ -55,16 +58,17 @@ func (s *Realm) OnConnect(c *connection.Connection) {
 func (s *Realm) OnMessage(c *connection.Connection, ctx interface{}, data []byte) (out []byte) {
 	packet := ctx.(*proto.WorldPacket)
 
-	log.Realm.Printf("Seq(%d) Recog(%d) Opcode(%d) PacketSize(%d): %s",
-		packet.Header.Seq, packet.Header.Recog, packet.Header.Opcode,
-		packet.Size, string(packet.Data))
+	log.Realm.Printf("Seq(%d) %s(%d) %s(%d) Size(%d): %s",
+		packet.Seq, packet.Recog, packet.Recog, packet.Opcode, packet.Opcode,
+		packet.Size, string(packet.Data()))
 
-	outdata, ret := handleIncoming(packet)
+	e := c.Context().(*list.Element)
+	ret := handleIncoming(e.Value.(*game.RealmSession), packet)
 
 	log.Realm.Printf("process ret:%d", ret)
+
 	if ret == 0 {
-		log.Realm.Printf("Send:%s", utils.RawData(outdata))
-		out = outdata
+
 	}
 
 	return
