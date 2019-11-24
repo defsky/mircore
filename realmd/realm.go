@@ -2,7 +2,6 @@ package realmd
 
 import (
 	"container/list"
-	"mircore/game"
 	"mircore/game/proto"
 	"mircore/utils/log"
 
@@ -12,6 +11,8 @@ import (
 	"github.com/Allenxuxu/gev"
 	"github.com/Allenxuxu/gev/connection"
 )
+
+var slog = log.Realm
 
 //Realm login server struct
 type Realm struct {
@@ -41,9 +42,9 @@ func NewRealmServer(port int, proto connection.Protocol) (*Realm, error) {
 
 //OnConnect callback when new connection come
 func (s *Realm) OnConnect(c *connection.Connection) {
-	log.Realm.Printf("New Connection from: %s\n", c.PeerAddr())
+	slog.Printf("New Connection from: %s\n", c.PeerAddr())
 
-	sess := &game.RealmSession{
+	sess := &RealmSession{
 		Conn: c,
 	}
 	s.mtx.Lock()
@@ -58,25 +59,20 @@ func (s *Realm) OnConnect(c *connection.Connection) {
 func (s *Realm) OnMessage(c *connection.Connection, ctx interface{}, data []byte) (out []byte) {
 	packet := ctx.(*proto.WorldPacket)
 
-	log.Realm.Printf("Seq(%d) %s(%d) %s(%d) Size(%d): %s",
-		packet.Seq, packet.Recog, packet.Recog, packet.Opcode, packet.Opcode,
-		packet.Size, string(packet.Data()))
+	slog.Printf("Seq(%d) %s(%d) Recog(%d) Size(%d): %s",
+		packet.Seq, packet.Opcode, packet.Opcode, packet.Recog,
+		packet.Size, packet)
 
 	e := c.Context().(*list.Element)
-	ret := handleIncoming(e.Value.(*game.RealmSession), packet)
-
-	log.Realm.Printf("process ret:%d", ret)
-
-	if ret == 0 {
-
-	}
+	sess := e.Value.(*RealmSession)
+	sess.HandlePacket(packet)
 
 	return
 }
 
 //OnClose callback when connection close
 func (s *Realm) OnClose(c *connection.Connection) {
-	log.Realm.Printf("Connection closed from: %s", c.PeerAddr())
+	slog.Printf("Connection closed from: %s", c.PeerAddr())
 
 	e := c.Context().(*list.Element)
 
@@ -87,13 +83,13 @@ func (s *Realm) OnClose(c *connection.Connection) {
 
 //Start start server
 func (s *Realm) Start() {
-	log.Realm.Printf("Listening at *:%d\n", s.port)
+	slog.Printf("Listening at *:%d\n", s.port)
 
 	s.listener.Start()
 }
 
 //Stop stop server
 func (s *Realm) Stop() {
-	log.Realm.Println("Stopping server ...")
+	slog.Println("Stopping server ...")
 	s.listener.Stop()
 }

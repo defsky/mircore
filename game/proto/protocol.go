@@ -59,3 +59,10 @@ func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuf
 	buffer.VirtualRevert()
 	return nil, nil
 }
+
+//Packet pack data
+func (p *Protocol) Packet(c *connection.Connection, data []byte) []byte {
+	log.Core.Printf("Send: %s", string(data))
+
+	return data
+}

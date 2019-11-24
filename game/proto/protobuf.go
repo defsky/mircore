@@ -6,9 +6,7 @@ import (
 	"errors"
 	"math"
 	"mircore/utils"
-	"mircore/utils/log"
 
-	"github.com/Allenxuxu/gev/connection"
 	"github.com/gobwas/pool/pbytes"
 )
 
@@ -16,6 +14,7 @@ type ProtoBuf struct {
 	bytes.Buffer
 }
 
+//Encode 以传输格式编码数据
 func (p *ProtoBuf) Encode() *ProtoBuf {
 	buf := pbytes.GetLen(p.Len())
 	defer pbytes.Put(buf)
@@ -28,6 +27,7 @@ func (p *ProtoBuf) Encode() *ProtoBuf {
 	return p
 }
 
+//Decode 将传输格式的数据解码
 func (p *ProtoBuf) Decode() (*ProtoBuf, error) {
 	buf := pbytes.GetLen(p.Len())
 	defer pbytes.Put(buf)
@@ -45,9 +45,12 @@ func (p *ProtoBuf) Decode() (*ProtoBuf, error) {
 	return p, nil
 }
 
+//UnMarshal 把ProtoBuf反序列化为WorldPacket
 func (p *ProtoBuf) UnMarshal() (*WorldPacket, error) {
 	return unMarshal(p.Bytes())
 }
+
+//HexString 返回数据的16进制字符串形式
 func (p *ProtoBuf) HexString() string {
 	return utils.RawData(p.Bytes())
 }
@@ -57,41 +60,33 @@ func (p *ProtoBuf) String() string {
 }
 
 func unMarshal(data []byte) (p *WorldPacket, err error) {
-	p = &WorldPacket{
-		buf: bytes.NewBuffer(data),
-	}
+	p = new(WorldPacket)
+	p.Write(data)
 
-	err = binary.Read(p.buf, binary.LittleEndian, &p.Recog)
-	if err != nil {
-		return nil, err
-	}
-
-	err = binary.Read(p.buf, binary.LittleEndian, &p.Opcode)
+	err = binary.Read(p, binary.LittleEndian, &p.Recog)
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Read(p.buf, binary.LittleEndian, &p.P1)
+	err = binary.Read(p, binary.LittleEndian, &p.Opcode)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Read(p.buf, binary.LittleEndian, &p.P2)
+
+	err = binary.Read(p, binary.LittleEndian, &p.P1)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Read(p.buf, binary.LittleEndian, &p.P2)
+	err = binary.Read(p, binary.LittleEndian, &p.P2)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Read(p, binary.LittleEndian, &p.P2)
 	if err != nil {
 		return nil, err
 	}
 
 	return
-}
-
-//Packet pack data
-func (p *Protocol) Packet(c *connection.Connection, data []byte) []byte {
-	log.Core.Printf("Send: %s", string(data))
-
-	return data
 }
 
 func decodeData(in []byte) (out []byte, err error) {

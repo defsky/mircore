@@ -1,11 +1,13 @@
 package game
 
+import "mircore/core"
+
 //Player game player object
 type Player struct {
-	session *Session
+	session *core.Session
 }
 
 //GetSession get session of player
-func (p *Player) GetSession() *Session {
+func (p *Player) GetSession() *core.Session {
 	return p.session
 }
