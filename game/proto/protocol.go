@@ -39,6 +39,7 @@ func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuf
 				return nil, nil
 			}
 			log.Core.Println("Received:", dataPacket.HexString())
+			dataSize := dataPacket.Len()
 
 			packet, err := dataPacket.UnMarshal()
 			if err != nil {
@@ -47,6 +48,7 @@ func (p *Protocol) UnPacket(c *connection.Connection, buffer *ringbuffer.RingBuf
 			}
 
 			packet.Seq = packetSeq
+			packet.Size = dataSize
 
 			return packet, nil
 		}

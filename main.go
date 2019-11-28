@@ -4,13 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"sync"
-
+	"mircore/db"
 	"mircore/game/proto"
 	"mircore/mird"
 	"mircore/realmd"
+	"os"
+	"os/signal"
+	"sync"
 )
 
 const banner = `
@@ -46,6 +46,8 @@ func main() {
 	flag.Parse()
 
 	fmt.Println(banner)
+
+	db.Migrate()
 
 	loginServer, err = realmd.NewRealmServer(loginPort, &proto.Protocol{})
 	if err != nil {
