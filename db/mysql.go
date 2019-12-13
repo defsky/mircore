@@ -10,20 +10,6 @@ import (
 var RealmDB *gorm.DB
 var WorldDB *gorm.DB
 
-func Mysql(c *DbConfig) (*gorm.DB, error) {
-	db, err := gorm.Open("mysql", c.String())
-	if err != nil {
-		return nil, err
-	}
-
-	pool := db.DB()
-	pool.SetMaxIdleConns(5)
-	pool.SetConnMaxLifetime(2 * time.Minute)
-	pool.SetMaxOpenConns(20)
-
-	return db, nil
-}
-
 func init() {
 	dbc, err := Mysql(RealmDBConf)
 	if err != nil {
@@ -36,4 +22,18 @@ func init() {
 		panic(err)
 	}
 	WorldDB = dbc
+}
+
+func Mysql(c *DbConfig) (*gorm.DB, error) {
+	db, err := gorm.Open("mysql", c.String())
+	if err != nil {
+		return nil, err
+	}
+
+	pool := db.DB()
+	pool.SetMaxIdleConns(5)
+	pool.SetConnMaxLifetime(2 * time.Minute)
+	pool.SetMaxOpenConns(20)
+
+	return db, nil
 }
