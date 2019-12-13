@@ -6,7 +6,7 @@ mir server
 ```
 $ git clone http://github.com/defsky/mircore.git
 $ cd mircore
----> config db info in file ./mircore/db/config.go
+---> config db info in file ./db/config.go
 
 $ make run
 ```
