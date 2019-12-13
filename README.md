@@ -1,0 +1,2 @@
+# mircore
+mir server
