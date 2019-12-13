@@ -7,6 +7,7 @@ import (
 
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/Allenxuxu/gev"
 	"github.com/Allenxuxu/gev/connection"
@@ -40,13 +41,22 @@ func NewRealmServer(port int, proto connection.Protocol) (*Realm, error) {
 	return s, err
 }
 
+func (s *Realm) report() {
+	s.mtx.Lock()
+	ConnCounts := s.conns.Len()
+	s.mtx.Unlock()
+	slog.Printf("Alive Connections: %d\n", ConnCounts)
+}
+
 //OnConnect callback when new connection come
 func (s *Realm) OnConnect(c *connection.Connection) {
 	slog.Printf("New Connection from: %s\n", c.PeerAddr())
 
 	sess := &RealmSession{
-		Conn: c,
+		Conn:      c,
+		StartTime: time.Now(),
 	}
+
 	s.mtx.Lock()
 	e := s.conns.PushBack(sess)
 	s.mtx.Unlock()
@@ -84,6 +94,8 @@ func (s *Realm) OnClose(c *connection.Connection) {
 //Start start server
 func (s *Realm) Start() {
 	slog.Printf("Listening at *:%d\n", s.port)
+
+	s.listener.RunEvery(time.Second*10, s.report)
 
 	s.listener.Start()
 }

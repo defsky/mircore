@@ -2,13 +2,15 @@ package realmd
 
 import (
 	"mircore/game/proto"
+	"time"
 
 	"github.com/Allenxuxu/gev/connection"
 )
 
 //Session world session object
 type RealmSession struct {
-	Conn *connection.Connection
+	Conn      *connection.Connection
+	StartTime time.Time
 }
 
 //SendPacket send packet to session
